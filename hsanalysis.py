@@ -16,6 +16,7 @@ def display_sorted_card_data(card_data):
     for i in sorted(card_data, key=lambda card_info: (card_info['cost'], card_info['name'])):
         print('(' + str(i['cost']) + ') ' + i['name'])
 
+
 def filter_card_data_by_race(card_data, race):
     return [x for x in card_data if 'race' in x and (x['race'] in [race, 'ALL'])]
 
@@ -48,9 +49,12 @@ my_card_data = load_card_data()
 standard_card_data = filter_card_data_by_standard_legality(my_card_data)
 
 # filter for shaman and neutral cards first, then filter further on minions, then on cost
-shaman_and_neutral_cards = filter_card_data_by_class(standard_card_data, 'SHAMAN', True)
-shaman_and_neutral_minions = filter_card_data_by_type(shaman_and_neutral_cards, 'MINION')
-shaman_and_neutral_cheap_minions = filter_card_data_by_max_cost(shaman_and_neutral_minions, 1)
+shaman_and_neutral_cards = filter_card_data_by_class(
+    standard_card_data, 'SHAMAN', True)
+shaman_and_neutral_minions = filter_card_data_by_type(
+    shaman_and_neutral_cards, 'MINION')
+shaman_and_neutral_cheap_minions = filter_card_data_by_max_cost(
+    shaman_and_neutral_minions, 1)
 
 # filter on priest cards first, then filter further on spells
 priest_cards = filter_card_data_by_class(standard_card_data, 'PRIEST', False)
