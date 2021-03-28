@@ -16,9 +16,8 @@ def display_sorted_card_data(card_data):
     for i in sorted(card_data, key=lambda card_info: (card_info['cost'], card_info['name'])):
         print('(' + str(i['cost']) + ') ' + i['name'])
 
-
 def filter_card_data_by_race(card_data, race):
-    return [x for x in card_data if 'race' in x and (x['race'] == race or x['race'] == 'ALL')]
+    return [x for x in card_data if 'race' in x and (x['race'] in [race, 'ALL'])]
 
 
 def filter_card_data_by_type(card_data, type):
@@ -26,45 +25,38 @@ def filter_card_data_by_type(card_data, type):
 
 
 def filter_card_data_by_standard_legality(card_data):
-    return [x for x in card_data if x['set'] == 'BLACK_TEMPLE' or
-            x['set'] == 'SCHOLOMANCE' or
-            x['set'] == 'DARKMOON_FAIRE' or
-            x['set'] == 'THE_BARRENS' or
-            x['set'] == 'CORE']
+    return [x for x in card_data if x['set'] in ['BLACK_TEMPLE', 'SCHOLOMANCE', 'DARKMOON_FAIRE', 'THE_BARRENS', 'CORE']]
 
 
 def filter_card_data_by_class(card_data, class_name, include_neutrals=True):
-    multi_class_groups = {}
-    multi_class_groups['ROGUE'] = ['JADE_LOTUS', 'ROGUE_WARRIOR', 'MAGE_ROGUE']
-    multi_class_groups['MAGE'] = ['KABAL', 'MAGE_ROGUE', 'MAGE_SHAMAN']
-    multi_class_groups['SHAMAN'] = [
-        'JADE_LOTUS', 'MAGE_SHAMAN', 'DRUID_SHAMAN']
-    multi_class_groups['DRUID'] = [
-        'JADE_LOTUS', 'DRUID_SHAMAN', 'DRUID_HUNTER']
-    multi_class_groups['HUNTER'] = [
-        'GRIMY_GOONS', 'DRUID_HUNTER', 'HUNTER_DEMONHUNTER']
-    multi_class_groups['DEMONHUNTER'] = [
-        'HUNTER_DEMONHUNTER', 'WARLOCK_DEMONHUNTER']
-    multi_class_groups['WARLOCK'] = [
-        'KABAL', 'WARLOCK_DEMONHUNTER', 'PRIEST_WARLOCK']
-    multi_class_groups['PRIEST'] = [
-        'KABAL', 'PRIEST_WARLOCK', 'PALADIN_PRIEST']
-    multi_class_groups['PALADIN'] = [
-        'GRIMY_GOONS', 'PALADIN_PRIEST', 'PALADIN_WARRIOR']
-    multi_class_groups['WARRIOR'] = [
-        'GRIMY_GOONS', 'PALADIN_WARRIOR', 'ROGUE_WARRIOR']
-
     return [x for x in card_data if x['cardClass'] == class_name or
-            ('multiClassGroup' in x and x['multiClassGroup'] in multi_class_groups[class_name]) or
-            (include_neutrals and (not 'multiClassGroup' in x and x['cardClass'] == 'NEUTRAL'))]
+            ('classes' in x and class_name in x['classes']) or
+            (include_neutrals and (not ('classes' in x) and x['cardClass'] == 'NEUTRAL'))]
+
+
+def filter_card_data_by_min_cost(card_data, min_cost):
+    return [x for x in card_data if x['cost'] >= min_cost]
+
+
+def filter_card_data_by_max_cost(card_data, max_cost):
+    return [x for x in card_data if x['cost'] <= max_cost]
 
 
 my_card_data = load_card_data()
 
-# example filters
-my_card_data = filter_card_data_by_standard_legality(my_card_data)
-my_card_data = filter_card_data_by_class(my_card_data, 'SHAMAN', True)
-my_card_data = filter_card_data_by_type(my_card_data, 'MINION')
-my_card_data = filter_card_data_by_race(my_card_data, 'DRAGON')
+# only consider standard cards
+standard_card_data = filter_card_data_by_standard_legality(my_card_data)
 
-display_sorted_card_data(my_card_data)
+# filter for shaman and neutral cards first, then filter further on minions, then on cost
+shaman_and_neutral_cards = filter_card_data_by_class(standard_card_data, 'SHAMAN', True)
+shaman_and_neutral_minions = filter_card_data_by_type(shaman_and_neutral_cards, 'MINION')
+shaman_and_neutral_cheap_minions = filter_card_data_by_max_cost(shaman_and_neutral_minions, 1)
+
+# filter on priest cards first, then filter further on spells
+priest_cards = filter_card_data_by_class(standard_card_data, 'PRIEST', False)
+priest_spells = filter_card_data_by_type(priest_cards, 'SPELL')
+
+# display the examples
+display_sorted_card_data(shaman_and_neutral_cheap_minions)
+print()
+display_sorted_card_data(priest_spells)
